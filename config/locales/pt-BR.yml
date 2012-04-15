@@ -1,0 +1,17 @@
+pt-BR:
+  spree/calculator/correio/sedex10:
+    description: Sedex 10
+    service: sedex_10
+  spree/calculator/correio/e_sedex:
+    description: E-Sedex
+    service: e_sedex
+  spree/calculator/correio/pac:
+    description: Pac
+    service: pac
+  spree/calculator/correio/sedex_hoje:
+    description: Sedex Hoje
+    service: sedex_hoje
+  spree/calculator/correio/sedex:
+    description: Sedex
+    service: sedex
+      
