@@ -2,9 +2,17 @@ module Spree::CorreiosShipping
 end
 module SpreeCorreiosShippingExtension
   class Engine < Rails::Engine
+    
+    initializer "spree.correios_shipping.preferences", :before => :load_config_initializers do |app|
+      Spree::CorreiosShipping::Config = Spree::CorreiosShippingConfiguration.new
+    end
+    
     def self.activate
       Dir.glob(File.join(File.dirname(__FILE__), "../../app/models/spree/calculator/**/base.rb")) do |c|
         Rails.env.production? ? require(c) : load(c)
+      end
+      Dir.glob(File.join(File.dirname(__FILE__), "../../app/**/*_decorator*.rb")) do |c|
+        Rails.application.config.cache_classes ? require(c) : load(c)
       end
     end
 

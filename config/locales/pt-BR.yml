@@ -1,4 +1,6 @@
 pt-BR:
+  correios_shipping_error: "Erro no cálculo do frete"
+  correios_http_error: "Serviço para cálculo do frete indisponível."
   spree/calculator/correio/sedex10:
     description: Sedex 10
     service: sedex_10

@@ -1,13 +1,5 @@
 module Spree
   class Calculator::Correio::Base < Calculator
-    preference :zipcode, :string
-    preference :default_weight, :decimal, :default => 0.0
-    preference :box_x, :integer, :default => 36
-    preference :box_y, :integer, :default => 27
-    preference :box_z, :integer, :default => 27
-    preference :notice, :boolean, :default => false
-    preference :warranty, :boolean, :default => false
-    
     def cached_response(order)
       response = Rails.cache.fetch(cache_key(order)) do
         response = correio_info(order)
@@ -18,12 +10,15 @@ module Spree
     def compute(object)
       order = find_order(object)
       response_for_service = cached_response(order)[self.class.service]
-      cached_response(order)[self.class.service].valor rescue nil
+      return nil if response_for_service.blank? || response_for_service.error?
+      cached_response(order)[self.class.service].valor
     end
     
     def timing(object)
       order = find_order(object)
-      cached_response(order)[self.class.service].prazo_entrega rescue nil
+      response_for_service = cached_response(order)[self.class.service]
+      return nil if response_for_service.blank? || response_for_service.error?
+      cached_response(order)[self.class.service].prazo_entrega
     end
 
     private
@@ -32,37 +27,47 @@ module Spree
       total_weight = order_total_weight(order)
       return {} if total_weight == 0
       request_attributes = {
-        :cep_origem => preferred_zipcode,
+        :cep_origem => Spree::CorreiosShipping::Config[:zipcode],
         :cep_destino => order.ship_address.zipcode.to_s,
         :peso => total_weight,
-        :comprimento => preferred_box_x,
-        :largura => preferred_box_y,
-        :altura => preferred_box_z,
-        :aviso_recebimento => preferred_notice
+        :comprimento => Spree::CorreiosShipping::Config[:box_x],
+        :largura => Spree::CorreiosShipping::Config[:box_y],
+        :altura => Spree::CorreiosShipping::Config[:box_z],
       }
-      total_cost_price = if preferred_warranty
-        begin
-          order.total_cost_price 
-        rescue
-          raise "Spree::Order#total_cost_price must be implemented"
-        end
-      end
-      
-      request_attributes.merge!(:valor_declarado => order.total_cost_price) if total_cost_price
-      
       request = Correios::Frete::Calculador.new request_attributes
       
       begin
-        response = request.calcular :sedex, :pac, :e_sedex, :sedex_10, :sedex_hoje
-      rescue => e
-        raise "my error"
+        response = request.calcular *Spree::Calculator::Correio::Scaffold.descendants.map(&:service)
+      rescue
+        raise Spree::CorreiosShippingError.new("#{I18n.t(:correios_shipping_error)}: #{I18n.t(:correios_http_error)}")
       end
+      
+      if no_service?(response)
+        raise Spree::CorreiosShippingError.new("#{I18n.t(:correios_shipping_error)}: #{catch_errors(response)}")
+      end
+      response
+    end
+    
+    def error_list
+      ["-3", "-6", "-10", "-33", "-888", "006", "7", "99"]
+    end
+    
+    def no_service?(response)
+      response.values.select{|v| v.error?}.count == response.values.count
+    end
+    
+    def catch_errors(response)
+      errors = []
+      response.values.each do |v|
+        errors << v.msg_erro if v.erro.in?(error_list)
+      end
+      errors.uniq.join(", ")
     end
 
     def order_total_weight(order)
       total_weight = 0
       order.line_items.each do |item|
-        total_weight += item.quantity * (item.variant.weight || self.preferred_default_weight)
+        total_weight += item.quantity * (item.variant.weight || Spree::CorreiosShipping::Config[:default_weight])
       end
       total_weight
     end
