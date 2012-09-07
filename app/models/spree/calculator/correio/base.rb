@@ -26,6 +26,7 @@ module Spree
     def correio_info(order)
       total_weight = order_total_weight(order)
       return {} if total_weight == 0
+
       request_attributes = {
         :cep_origem => Spree::CorreiosShipping::Config[:zipcode],
         :cep_destino => order.ship_address.zipcode.to_s,
@@ -65,13 +66,11 @@ module Spree
     end
 
     def order_total_weight(order)
-      total_weight = 0
+      weight = 0
       order.line_items.each do |item|
-        item_weight = item.variant.weight
-        item_weight = Spree::CorreiosShipping::Config[:default_weight] if item_weight.in?([nil, 0])
-        total_weight += item.quantity * item_weight
+        weight += item.quantity * (item.variant.weight || 0)
       end
-      total_weight
+      weight == 0 ? Spree::CorreiosShipping::Config[:default_weight] : weight
     end
 
     def find_order(object)
