@@ -68,7 +68,7 @@ module Spree
       total_weight = 0
       order.line_items.each do |item|
         item_weight = item.variant.weight
-        item_weight = Spree::CorreiosShipping::Config[:default_weight]) if item_weight.in?([nil, 0])
+        item_weight = Spree::CorreiosShipping::Config[:default_weight] if item_weight.in?([nil, 0])
         total_weight += item.quantity * item_weight
       end
       total_weight
