@@ -11,7 +11,7 @@ module Spree
       order = find_order(object)
       response_for_service = cached_response(order)[self.class.service]
       return nil if response_for_service.blank? || response_for_service.error?
-      cached_response(order)[self.class.service].valor
+      cached_response(order)[self.class.service].valor + Spree::CorreiosShipping::Config[:default_box_price] rescue nil
     end
     
     def timing(object)
