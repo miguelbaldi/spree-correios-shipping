@@ -2,7 +2,7 @@
 Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.name        = 'spree_correios_shipping'
-  s.version     = '1.0.5'
+  s.version     = '1.1.0'
   s.summary     = 'Extensão para cálculo de frete pelos correios'
   s.description = 'Extensão para cálculo de frete pelos correios'
   s.required_ruby_version = '>= 1.8.7'
@@ -17,5 +17,6 @@ Gem::Specification.new do |s|
   s.requirements << 'none'
 
   s.add_dependency('spree_core', '~> 1.0.0')
-  s.add_dependency('correios-frete', '1.0.2')
+  # s.add_dependency('correios-frete', '1.0.2')
+  s.add_dependency('correios-frete', '1.8.0')
 end

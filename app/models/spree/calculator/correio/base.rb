@@ -10,14 +10,14 @@ module Spree
     def compute(object)
       order = find_order(object)
       response_for_service = cached_response(order)[self.class.service]
-      return nil if response_for_service.blank? || response_for_service.error?
+      return self.class.fallback_amount if response_for_service.blank? || response_for_service.error?
       cached_response(order)[self.class.service].valor + Spree::CorreiosShipping::Config[:default_box_price] rescue nil
     end
     
     def timing(object)
       order = find_order(object)
       response_for_service = cached_response(order)[self.class.service]
-      return nil if response_for_service.blank? || response_for_service.error?
+      return self.class.fallback_timing if response_for_service.blank? || response_for_service.error?
       cached_response(order)[self.class.service].prazo_entrega
     end
 
@@ -40,11 +40,8 @@ module Spree
       begin
         response = request.calcular *Spree::Calculator::Correio::Scaffold.descendants.map(&:service)
       rescue
-        raise Spree::CorreiosShippingError.new("#{I18n.t(:correios_shipping_error)}: #{I18n.t(:correios_http_error)}")
-      end
-      
-      if no_service?(response)
-        raise Spree::CorreiosShippingError.new("#{I18n.t(:correios_shipping_error)}: #{catch_errors(response)}")
+        fake_service = OpenStruct.new(valor: Spree::CorreiosShipping::Config[:fallback_amount], prazo_entrega: -1)
+        response = {:pac => fake_service}
       end
       response
     end
