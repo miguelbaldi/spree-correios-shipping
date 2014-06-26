@@ -2,11 +2,6 @@ module Spree::CorreiosShipping
 end
 module SpreeCorreiosShippingExtension
   class Engine < Rails::Engine
-    
-    initializer "spree.correios_shipping.preferences", :before => :load_config_initializers do |app|
-      Spree::CorreiosShipping::Config = Spree::CorreiosShippingConfiguration.new
-    end
-    
     def self.activate
       Dir.glob(File.join(File.dirname(__FILE__), "../../app/models/spree/calculator/**/base.rb")) do |c|
         Rails.env.production? ? require(c) : load(c)
@@ -23,7 +18,6 @@ module SpreeCorreiosShippingExtension
       Dir.glob(File.join(File.dirname(__FILE__), "../../app/models/spree/calculator/**/*.rb")) do |c|
         Rails.env.production? ? require(c) : load(c)
       end
-
       app.config.spree.calculators.shipping_methods += Spree::Calculator::Correio::Scaffold.descendants
     end
   end
