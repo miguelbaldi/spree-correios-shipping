@@ -8,6 +8,8 @@ module Spree
     preference :box_x, :integer, :default => 36
     preference :box_y, :integer, :default => 27
     preference :box_z, :integer, :default => 27
+    preference :company_code, :string
+    preference :password, :string
 
     def cached_response(order)
       response = Rails.cache.fetch(cache_key(order)) do
@@ -44,6 +46,12 @@ module Spree
         :largura => preferred_box_y,
         :altura => preferred_box_z,
       }
+
+      if has_preference? :company_code and has_preference? :password
+        request_attributes[:codigo_empresa] = preferred_company_code unless preferred_company_code.blank?
+        request_attributes[:senha] = preferred_password unless preferred_password.blank?
+      end
+
       request = Correios::Frete::Calculador.new request_attributes
 
       begin
@@ -93,9 +101,11 @@ module Spree
     end
 
     def cache_key(order)
-      addr = order.shipping_address
+      addr = order.ship_address
       line_items_hash = Digest::MD5.hexdigest(order.line_items.map {|li| li.variant_id.to_s + "_" + li.quantity.to_s }.join("|"))
-      @cache_key = "correio-#{order.number}-#{addr.country.iso}-#{addr.state ? addr.state.abbr : addr.state_name}-#{addr.city}-#{addr.zipcode}-#{line_items_hash}".gsub(" ","")
+      credentials = "#{preferred_company_code}-#{preferred_password}"
+      @cache_key = "correio-#{order.number}-#{addr.country.iso}-#{addr.state ? addr.state.abbr : addr.state_name}-#{addr.city}-#{addr.zipcode}-#{line_items_hash}-#{credentials}".gsub(" ","")
     end
+
   end
 end

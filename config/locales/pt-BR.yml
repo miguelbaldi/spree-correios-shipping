@@ -16,4 +16,10 @@ pt-BR:
   spree/calculator/correio/sedex:
     description: Sedex
     service: sedex
-      
+  spree/calculator/correio/sedex_contrato:
+    description: Sedex Contrato
+    service: sedex_com_contrato_1
+  spree/calculator/correio/pac_contrato:
+    description: Pac Contrato
+    service: pac_com_contrato
+

@@ -10,11 +10,11 @@ class Spree::Calculator::Correio::Scaffold < Spree::Calculator::Correio::Base
     def key
       model_name.i18n_key
     end
-    
+
     def description
       I18n.t("#{key}.description")
     end
-    
+
     def service
       I18n.t("#{key}.service").to_sym
     end
