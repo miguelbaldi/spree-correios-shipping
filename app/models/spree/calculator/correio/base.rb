@@ -104,7 +104,7 @@ module Spree
       addr = order.ship_address
       line_items_hash = Digest::MD5.hexdigest(order.line_items.map {|li| li.variant_id.to_s + "_" + li.quantity.to_s }.join("|"))
       credentials = "#{preferred_company_code}-#{preferred_password}"
-      @cache_key = "correio-#{order.number}-#{addr.country.iso}-#{addr.state ? addr.state.abbr : addr.state_name}-#{addr.city}-#{addr.zipcode}-#{line_items_hash}-#{credentials}".gsub(" ","")
+      @cache_key = "correio-#{order.number}-#{addr.country.iso}-#{addr.state ? addr.state.abbr : addr.state_name}-#{addr.city}-#{addr.zipcode}-#{line_items_hash}-#{credentials}-#{preferred_zipcode}".gsub(" ","")
     end
 
   end
