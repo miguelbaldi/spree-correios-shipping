@@ -11,28 +11,35 @@ module Spree
     preference :password, :string
 
     def cached_response(order)
-      response = Rails.cache.fetch(cache_key(order)) do
+      # response = Rails.cache.fetch(cache_key(order)) do
         response = correio_info(order)
-      end
+      # end
       response
     end
 
     def compute(object)
-      order = find_order(object)
-      response_for_service = cached_response(order)[self.class.service]
-      return self.class.fallback_amount if response_for_service.blank? || response_for_service.error?
-      cached_response(order)[self.class.service].valor + preferred_default_box_price rescue nil
+      begin
+        order = find_order(object)
+        response_for_service = cached_response(order).select{ |d| services.include?(d) }.reject{ |k,v| v.error? }
+                               .values.min_by(&:valor)
+        response_for_service.valor + preferred_default_box_price
+      rescue
+        nil
+      end
     end
 
     def timing(object)
-      order = find_order(object)
-      response_for_service = cached_response(order)[self.class.service]
-      return self.class.fallback_timing if response_for_service.blank? || response_for_service.error?
-      cached_response(order)[self.class.service].prazo_entrega
+      begin
+        order = find_order(object)
+        response_for_service = cached_response(order).select{ |d| services.include?(d) }.reject{ |k,v| v.error? }
+                                 .values.min_by(&:valor)
+        response_for_service.prazo_entrega
+      rescue
+        nil
+      end
     end
 
     private
-
     def correio_info(order)
       total_weight = order_total_weight(order)
       return {} if total_weight == 0
@@ -54,28 +61,13 @@ module Spree
       request = Correios::Frete::Calculador.new request_attributes
 
       begin
-        response = request.calcular *Spree::Calculator::Correio::Scaffold.descendants.map(&:service).flatten
+        response = request.calcular *available_services
       rescue
         fake_service = OpenStruct.new(valor: preferred_fallback_amount, prazo_entrega: -1)
         response = {:pac => fake_service}
       end
+
       response
-    end
-
-    def error_list
-      ["-3", "-6", "-10", "-33", "-888", "006", "7", "99"]
-    end
-
-    def no_service?(response)
-      response.values.select{|v| v.error?}.count == response.values.count
-    end
-
-    def catch_errors(response)
-      errors = []
-      response.values.each do |v|
-        errors << v.msg_erro if v.erro.in?(error_list)
-      end
-      errors.uniq.join(", ")
     end
 
     def order_total_weight(order)
@@ -104,6 +96,14 @@ module Spree
       line_items_hash = Digest::MD5.hexdigest(order.line_items.map {|li| li.variant_id.to_s + "_" + li.quantity.to_s }.join("|"))
       credentials = "#{preferred_company_code}-#{preferred_password}"
       @cache_key = "correio-#{order.number}-#{addr.country.iso}-#{addr.state ? addr.state.abbr : addr.state_name}-#{addr.city}-#{addr.zipcode}-#{line_items_hash}-#{credentials}-#{preferred_zipcode}".gsub(" ","")
+    end
+
+    def available_services
+      Spree::Calculator.where(type: available_calculators_class_name).map(&:services).flatten
+    end
+
+    def available_calculators_class_name
+      Spree::Calculator::Correio::Scaffold.descendants.map(&:name)
     end
 
   end

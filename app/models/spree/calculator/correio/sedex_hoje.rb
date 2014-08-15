@@ -1,6 +1,6 @@
 class Spree::Calculator::Correio::SedexHoje < Spree::Calculator::Correio::Scaffold
 
-  def self.services
+  def services
     [:sedex_hoje]
   end
 end
