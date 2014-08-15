@@ -1,30 +1,42 @@
-# This file is copied to ~/spec when you run 'ruby script/generate rspec'
-# from the project root directory.
-ENV["RAILS_ENV"] ||= 'test'
-require File.expand_path("../test_app/config/environment", __FILE__)
-require 'rspec/rails'
+# Configure Rails Environment
+ENV['RAILS_ENV'] = 'test'
 
-# Requires supporting files with custom matchers and macros, etc,
-# in ./support/ and its subdirectories.
-Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
+require File.expand_path('../dummy/config/environment.rb',  __FILE__)
+
+require 'rspec/rails'
+require 'database_cleaner'
+require 'pry'
+
+Dir[File.join(File.dirname(__FILE__), 'support/**/*.rb')].each { |f| require f }
+
+require 'spree/testing_support/factories'
+require 'spree/testing_support/controller_requests'
+require 'spree/testing_support/authorization_helpers'
+require 'spree/testing_support/url_helpers'
+
+require 'spree_paypal_express/factories'
 
 RSpec.configure do |config|
-  # == Mock Framework
-  #
-  # If you prefer to use mocha, flexmock or RR, uncomment the appropriate line:
-  #
-  # config.mock_with :mocha
-  # config.mock_with :flexmock
-  # config.mock_with :rr
+  config.include Spree::TestingSupport::UrlHelpers
+  config.include Spree::TestingSupport::AuthorizationHelpers::Controller
+
   config.mock_with :rspec
+  config.color = true
+  config.use_transactional_fixtures = false
 
-  config.fixture_path = "#{::Rails.root}/spec/fixtures"
+  config.before :suite do
+    DatabaseCleaner.strategy = :transaction
+    DatabaseCleaner.clean_with :truncation
+  end
 
-  #config.include Devise::TestHelpers, :type => :controller
-  # If you're not using ActiveRecord, or you'd prefer not to run each of your
-  # examples within a transaction, comment the following line or assign false
-  # instead of true.
-  config.use_transactional_fixtures = true
+  config.before do
+    DatabaseCleaner.strategy = example.metadata[:js] ? :truncation : :transaction
+    DatabaseCleaner.start
+  end
+
+  config.after do
+    DatabaseCleaner.clean
+  end
+
+  config.fail_fast = ENV['FAIL_FAST'] || false
 end
-
-@configuration ||= AppConfiguration.find_or_create_by_name("Default configuration")
