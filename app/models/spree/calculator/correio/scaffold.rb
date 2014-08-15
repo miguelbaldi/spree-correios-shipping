@@ -19,5 +19,9 @@ class Spree::Calculator::Correio::Scaffold < Spree::Calculator::Correio::Base
     def service
       I18n.t("#{key}.service").to_sym
     end
+
+    def services
+      []
+    end
   end
 end

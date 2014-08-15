@@ -54,7 +54,7 @@ module Spree
       request = Correios::Frete::Calculador.new request_attributes
 
       begin
-        response = request.calcular *Spree::Calculator::Correio::Scaffold.descendants.map(&:service)
+        response = request.calcular *Spree::Calculator::Correio::Scaffold.descendants.map(&:service).flatten
       rescue
         fake_service = OpenStruct.new(valor: preferred_fallback_amount, prazo_entrega: -1)
         response = {:pac => fake_service}
