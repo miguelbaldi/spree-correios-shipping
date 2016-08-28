@@ -3,7 +3,7 @@ PATH
   specs:
     spree_correios_shipping (1.1.3)
       correios-frete (~> 1.9.1)
-      spree_core (~> 2.3.0.beta)
+      spree_core (>= 2.3.0.beta)
 
 GEM
   remote: http://rubygems.org/
